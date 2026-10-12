@@ -114,7 +114,7 @@
                     </button>
                 </form>
 
-                <!-- 카테고리 탭 (요구사항) -->
+                <!-- 카테고리 탭 -->
                 <div class="grid grid-cols-4 gap-2 text-[11px] font-bold">
                     <button onclick="searchByCategory('PS3')" class="flex flex-col items-center justify-center gap-1 p-2 bg-green-50 hover:bg-green-100 border border-green-200 rounded-xl text-green-700 transition-all">
                         <i class="fa-solid fa-baby text-lg"></i>어린이집
@@ -157,6 +157,15 @@
                 <i class="fa-solid fa-circle-info text-sky-400"></i>
                 <span id="toastMessage">안내 메시지</span>
             </div>
+            
+            <!-- 내 위치로 돌아가기 버튼 -->
+            <button 
+                onclick="requestUserGeolocation()" 
+                class="absolute bottom-6 right-6 z-20 w-12 h-12 bg-white text-blue-500 rounded-full shadow-lg border border-slate-200 flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+                title="내 위치로 이동"
+            >
+                <i class="fa-solid fa-crosshairs text-xl"></i>
+            </button>
         </main>
     </div>
 
@@ -209,7 +218,7 @@
 
             placesService = new kakao.maps.services.Places();
 
-            // 현재 위치 불러오기
+            // [추가 기능] 페이지가 열리면 즉시 사용자 위치 권한을 확인하고 중심으로 이동
             requestUserGeolocation();
 
             // [요구사항] 지도 클릭 시 커스텀 마커 생성
@@ -219,11 +228,11 @@
         }
 
         /**
-         * 2. 내 위치 파악 (GPS)
+         * 2. 내 위치 파악 (GPS) 및 중심으로 이동
          */
         function requestUserGeolocation() {
             if (navigator.geolocation) {
-                showToast("현재 위치를 찾고 있습니다...");
+                showToast("현재 위치를 확인하고 있습니다...");
                 
                 navigator.geolocation.getCurrentPosition(
                     function(position) {
@@ -231,16 +240,20 @@
                         const lng = position.coords.longitude;
                         userCurrentPosition = new kakao.maps.LatLng(lat, lng);
 
-                        map.setCenter(userCurrentPosition);
+                        // 권한 허용 시 내 위치로 지도를 부드럽게 이동시킴
+                        map.panTo(userCurrentPosition);
                         displayCurrentLocationBadge(userCurrentPosition);
-                        showToast("현재 위치를 찾았습니다!");
+                        showToast("현재 위치로 지도를 이동했습니다!");
                     },
                     function(error) {
-                        showToast("위치 권한이 없어 기본 위치로 시작합니다.");
+                        console.warn("Geolocation 권한 거부 또는 실패", error);
+                        showToast("위치 권한이 거부되어 기본 위치(서울)로 시작합니다.");
                         userCurrentPosition = map.getCenter();
                     },
                     { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
                 );
+            } else {
+                showToast("현재 브라우저에서는 위치 기능을 지원하지 않습니다.");
             }
         }
 
